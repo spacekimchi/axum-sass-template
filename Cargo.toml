@@ -1,0 +1,48 @@
+[package]
+name = "axum-sass-template"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "axum_sass_template"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Axum, Tower, and Tokio
+axum = { version = "0.7.5", features = ["multipart", "macros"] }
+axum-extra = { version = "0.9.3", features = ["cookie", "cookie-key-expansion", "cookie-private", "cookie-signed"] }
+tower = "0.4.13"
+tokio = { version = "1.37.0", features = ["full"] }
+
+# Configuration
+config = "0.14.0"
+dotenv = "0.15.0"
+
+# Errors
+anyhow = "1.0.86"
+
+# Serialize and Deserialize
+serde = { version = "1.0.204", features = ["derive"] }
+serde-aux = "4.5.0"
+serde_json = "1.0.120"
+
+# Database
+sqlx = { version = "0.7.4", features = ["postgres", "time", "macros", "uuid", "migrate", "runtime-tokio-native-tls"] }
+
+# ID
+uuid = { version = "1.10.0", features = ["serde"] }
+
+# For hiding secret values in logs
+secrecy = { version = "0.8.0", features = ["serde"] }
+
+# Tracing
+tracing = { version = "0.1.40", features = ["log"] }
+tracing-bunyan-formatter = "0.3.9"
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
+tower-http = { version = "0.5.2", features = ["trace"] }
