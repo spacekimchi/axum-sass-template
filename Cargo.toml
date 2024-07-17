@@ -31,11 +31,14 @@ serde = { version = "1.0.204", features = ["derive"] }
 serde-aux = "4.5.0"
 serde_json = "1.0.120"
 
+# hashing
+argon2 = { version = "0.5.3", features = ["std"] }
+
 # Database
 sqlx = { version = "0.7.4", features = ["postgres", "time", "macros", "uuid", "migrate", "runtime-tokio-native-tls"] }
 
 # ID
-uuid = { version = "1.10.0", features = ["serde"] }
+uuid = { version = "1.10.0", features = ["fast-rng", "macro-diagnostics", "serde", "v4"] }
 
 # For hiding secret values in logs
 secrecy = { version = "0.8.0", features = ["serde"] }
@@ -46,3 +49,8 @@ tracing-bunyan-formatter = "0.3.9"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
+
+[dev-dependencies]
+# Part of tracing for tests
+once_cell = "1.19.0"
+reqwest = { version = "0.12.5", features = ["json", "cookies", "rustls-tls"] }
