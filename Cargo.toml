@@ -48,7 +48,11 @@ tracing = { version = "0.1.40", features = ["log"] }
 tracing-bunyan-formatter = "0.3.9"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
-tower-http = { version = "0.5.2", features = ["trace"] }
+tower-http = { version = "0.5.2", features = ["fs", "trace"] }
+
+# Frontend
+tera = "1.20.0"
+grass = "0.13.3"
 
 [dev-dependencies]
 # Part of tracing for tests

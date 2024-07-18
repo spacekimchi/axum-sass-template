@@ -8,15 +8,22 @@ use axum::{Extension,Router};
 use tower::ServiceBuilder;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
+use std::sync::Arc;
+use tera::Tera;
+use tower_http::services::{ServeDir, ServeFile};
+use std::fs;
+use std::path::Path;
 
 use crate::configuration::Settings;
 use crate::configuration::DatabaseSettings;
 use crate::routes::health_check_routes;
+use crate::routes::homepage_routes;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub hmac_secret: Secret<String>,
+    pub tera: Arc<Tera>,
 }
 
 pub struct Application {
@@ -26,6 +33,8 @@ pub struct Application {
 
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
+        // Compile SCSS files to CSS at runtime
+        compile_scss_to_css("scss", "public/css");
         let connection_pool = get_connection_pool(&configuration.database);
 
         let address = format!(
@@ -34,12 +43,15 @@ impl Application {
         );
         let listener = TcpListener::bind(address).await?;
         let port = listener.local_addr().unwrap().port();
+        let tera = Tera::new("templates/**/*html")?;
+        let tera = Arc::new(tera);
         let server = run(
             connection_pool,
             listener,
             configuration.application.base_url,
             configuration.redis_uri,
             configuration.application.hmac_secret,
+            tera,
         ).await?;
 
         Ok(Self { port, server })
@@ -64,11 +76,12 @@ pub fn get_connection_pool(
 
 pub struct ApplicationBaseUrl(pub String);
 
-pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _redis_uri: Secret<String>, hmac_secret: Secret<String>) -> Result<axum::serve::Serve<Router, Router>, anyhow::Error> {
+pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _redis_uri: Secret<String>, hmac_secret: Secret<String>, tera: Arc<Tera>) -> Result<axum::serve::Serve<Router, Router>, anyhow::Error> {
+
     let app = api_router()
         .layer(
             ServiceBuilder::new()
-            .layer(Extension(AppState {db: db_pool, hmac_secret}))
+            .layer(Extension(AppState {db: db_pool, hmac_secret, tera}))
             .layer(TraceLayer::new_for_http())
         );
     let serve = axum::serve(listener, app);
@@ -77,7 +90,31 @@ pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _red
 }
 
 fn api_router() -> Router {
-    // This is the order that the modules were authored in.
+    // The ServeDir directory will allow the application to access these files and its
+    // subdirectories
+    let service = ServeDir::new("public")
+        .fallback(ServeFile::new("assets/file_not_found.html"));
+
     Router::new()
+        .nest_service("/public", service)
         .merge(health_check_routes())
+        .merge(homepage_routes())
+}
+
+fn compile_scss_to_css(scss_dir: &str, css_dir: &str) {
+    // Create the CSS directory if it doesn't exist
+    fs::create_dir_all(css_dir).unwrap();
+
+    // Compile SCSS files to CSS
+    for entry in fs::read_dir(scss_dir).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+
+        if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+            let css = grass::from_path(&path, &grass::Options::default()).expect("Failed to compile SCSS");
+
+            let css_path = Path::new(css_dir).join(path.with_extension("css").file_name().unwrap());
+            fs::write(css_path, css).expect("Failed to write CSS");
+        }
+    }
 }

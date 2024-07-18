@@ -66,9 +66,13 @@ For autocompiling on code changes install cargo-watch with: `cargo install cargo
 
 Then run `cargo watch -x run`
 
+Run with `cargo watch --no-vcs-ignores -x run` to ignore the .gitignore and use the `.ignore_file` instead
+
 ## Frontend
 
-[] Add Tera and HTMX
+Instead of using a frontend framework, this project will use SSR to serve HTML, SCSS, and JavaScript.
+
+The project uses [tera](https://github.com/Keats/tera) for templating.
 
 ## Javascript
 

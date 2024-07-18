@@ -4,3 +4,5 @@ pub mod startup;
 pub mod routes;
 pub mod handlers;
 pub mod telemetry;
+pub mod template_helpers;
+pub mod utils;
