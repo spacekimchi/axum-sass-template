@@ -74,6 +74,12 @@ Instead of using a frontend framework, this project will use SSR to serve HTML, 
 
 The project uses [tera](https://github.com/Keats/tera) for templating.
 
+The scss will be compiled when the project starts using the [grass crate](https://github.com/connorskees/grass)
+
+The project is set up to compile any scss files in the `public/scss/` directory.
+
+This way, we only need to build the project with cargo. No javascript building involved!
+
 ## Javascript
 
 Add javascript files to /static/js/ directory and include them in the html wherever they are needed
