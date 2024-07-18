@@ -6,4 +6,6 @@
 
 **/*.swp
 
+public/css/*
+
 .env

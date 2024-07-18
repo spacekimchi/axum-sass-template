@@ -42,6 +42,14 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
+    pub async fn get_homepage_html(&self) -> reqwest::Response {
+        self.api_client
+            .get(&format!("{}/", &self.address))
+            .send()
+            .await
+            .expect("Failed to get homepage")
+    }
+
     pub async fn get_health_check(&self) -> reqwest::Response {
         self.api_client
             .get(&format!("{}/health", &self.address))
