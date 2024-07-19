@@ -9,7 +9,7 @@ use tokio::task;
 pub struct User {
     id: i32,
     pub username: String,
-    password: String,
+    password_hash: String,
 }
 
 // Here we've implemented `Debug` manually to avoid accidentally logging the
@@ -19,7 +19,7 @@ impl std::fmt::Debug for User {
         f.debug_struct("User")
             .field("id", &self.id)
             .field("username", &self.username)
-            .field("password", &"[redacted]")
+            .field("password_hash", &"[redacted]")
             .finish()
     }
 }
@@ -32,7 +32,7 @@ impl AuthUser for User {
     }
 
     fn session_auth_hash(&self) -> &[u8] {
-        self.password.as_bytes() // We use the password hash as the auth
+        self.password_hash.as_bytes() // We use the password hash as the auth
                                  // hash--what this means
                                  // is when the user changes their password the
                                  // auth session becomes invalid.
@@ -90,7 +90,7 @@ impl AuthnBackend for Backend {
         task::spawn_blocking(|| {
             // We're using password-based authentication--this works by comparing our form
             // input with an argon2 password hash.
-            Ok(user.filter(|user| verify_password(creds.password, &user.password).is_ok()))
+            Ok(user.filter(|user| verify_password(creds.password, &user.password_hash).is_ok()))
         })
         .await?
     }
