@@ -53,6 +53,13 @@ tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 # Frontend
 tera = "1.20.0"
 grass = "0.13.3"
+async-trait = "0.1.81"
+axum-login = "0.15.3"
+password-auth = "1.0.0"
+thiserror = "1.0.63"
+axum-messages = "0.6.1"
+tower-sessions-sqlx-store = { version = "0.12.0", features = ["postgres"] }
+time = "0.3.36"
 
 [dev-dependencies]
 # Part of tracing for tests

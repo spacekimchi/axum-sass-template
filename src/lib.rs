@@ -6,3 +6,4 @@ pub mod handlers;
 pub mod telemetry;
 pub mod template_helpers;
 pub mod utils;
+pub mod user;

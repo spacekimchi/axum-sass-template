@@ -13,11 +13,22 @@ use tera::Tera;
 use tower_http::services::{ServeDir, ServeFile};
 use std::fs;
 use std::path::Path;
+use axum_login::{
+    login_required,
+    tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer, cookie::Key},
+    AuthManagerLayerBuilder,
+};
+use axum_messages::MessagesManagerLayer;
+use tokio::{signal, task::AbortHandle};
+use tower_sessions_sqlx_store::PostgresStore;
 
 use crate::configuration::Settings;
 use crate::configuration::DatabaseSettings;
 use crate::routes::health_check_routes;
 use crate::routes::homepage_routes;
+use crate::routes::auth_routes;
+use crate::routes::protected_routes;
+use crate::user::Backend;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -28,7 +39,12 @@ pub struct AppState {
 
 pub struct Application {
     port: u16,
-    server: axum::serve::Serve<Router, Router>,
+    db_pool: PgPool,
+    tera: Arc<Tera>,
+    listener: TcpListener,
+    base_url: String,
+    redis_uri: Secret<String>,
+    hmac_secret: Secret<String>,
 }
 
 impl Application {
@@ -45,24 +61,19 @@ impl Application {
         let port = listener.local_addr().unwrap().port();
         let tera = Tera::new("templates/**/*html")?;
         let tera = Arc::new(tera);
-        let server = run(
-            connection_pool,
-            listener,
-            configuration.application.base_url,
-            configuration.redis_uri,
-            configuration.application.hmac_secret,
-            tera,
-        ).await?;
+        println!("RETURNING FORM BUILDING");
 
-        Ok(Self { port, server })
+        Ok(Self { port, db_pool: connection_pool, tera, listener, base_url: configuration.application.base_url, redis_uri: configuration.redis_uri, hmac_secret: configuration.application.hmac_secret })
     }
 
     pub fn port(&self) -> u16 {
         self.port
     }
 
-    pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
-        self.server.await
+    pub async fn run_until_stopped(self) -> Result<(), anyhow::Error> {
+        run(
+            self.db_pool, self.listener, self.base_url, self.redis_uri, self.hmac_secret, self.tera
+            ).await
     }
 }
 
@@ -76,17 +87,47 @@ pub fn get_connection_pool(
 
 pub struct ApplicationBaseUrl(pub String);
 
-pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _redis_uri: Secret<String>, hmac_secret: Secret<String>, tera: Arc<Tera>) -> Result<axum::serve::Serve<Router, Router>, anyhow::Error> {
+pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _redis_uri: Secret<String>, hmac_secret: Secret<String>, tera: Arc<Tera>) -> Result<(), anyhow::Error> {
+    println!("AT THE START OF RUN RETURNING");
+    // Session layer.
+    //
+    // This uses `tower-sessions` to establish a layer that will provide the session
+    // as a request extension.
+    let session_store = PostgresStore::new(db_pool.clone());
+    session_store.migrate().await?;
+    let deletion_task = tokio::task::spawn(
+        session_store
+        .clone()
+        .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+    );
+    // Generate a cryptographic key to sign the session cookie.
+    // let key = Key::generate();
 
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(false)
+        .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
+
+    // Auth service.
+    //
+    // This combines the session layer with our backend to establish the auth
+    // service which will provide the auth session as a request extension.
+    let backend = Backend::new(db_pool.clone());
+    let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
+
+    println!("AT THE MIDDLE OF RUN RETURNING");
     let app = api_router()
-        .layer(
-            ServiceBuilder::new()
-            .layer(Extension(AppState {db: db_pool, hmac_secret, tera}))
-            .layer(TraceLayer::new_for_http())
-        );
-    let serve = axum::serve(listener, app);
+        .layer(TraceLayer::new_for_http())
+        .layer(Extension(AppState {db: db_pool, hmac_secret, tera}))
+        .layer(MessagesManagerLayer)
+        .layer(auth_layer);
+    println!("AT THE AFTER ROUTE OF RUN RETURNING");
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
+        .await?;
 
-    Ok(serve)
+    deletion_task.await??;
+    println!("AT THE END OF RUN RETURNING");
+    Ok(())
 }
 
 fn api_router() -> Router {
@@ -99,6 +140,8 @@ fn api_router() -> Router {
         .nest_service("/public", service)
         .merge(health_check_routes())
         .merge(homepage_routes())
+        .merge(protected_routes())
+        .merge(auth_routes())
 }
 
 fn compile_scss_to_css(scss_dir: &str, css_dir: &str) {
@@ -116,5 +159,29 @@ fn compile_scss_to_css(scss_dir: &str, css_dir: &str) {
             let css_path = Path::new(css_dir).join(path.with_extension("css").file_name().unwrap());
             fs::write(css_path, css).expect("Failed to write CSS");
         }
+    }
+}
+
+async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => { deletion_task_abort_handle.abort() },
+        _ = terminate => { deletion_task_abort_handle.abort() },
     }
 }
