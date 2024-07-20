@@ -69,6 +69,9 @@ tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 tera = "1.20.0"
 grass = "0.13.3"
 
+# Emailers
+lettre = { version = "0.11.7", features = ["builder", "hostname", "smtp-transport", "tokio1-native-tls"] }
+
 [dev-dependencies]
 # Part of tracing for tests
 once_cell = "1.19.0"
