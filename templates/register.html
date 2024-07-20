@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Register
+{% endblock title %}
+
+{% block content %}
+    <div>
+        <form method="post">
+            <fieldset>
+                <legend>Account Registration</legend>
+                <p>
+                <label for="email">Email</label>
+                <input name="email" id="email" />
+                </p>
+                <p>
+                <label for="password">Password</label>
+                <input name="password" id="password" type="password" />
+                </p>
+            </fieldset>
+
+            <input type="submit" value="Register" />
+
+            {% if next %}
+                <input type="hidden" name="next" value="{{next}}" />
+            {% endif %}
+        </form>
+    </div>
+{% endblock content %}
+

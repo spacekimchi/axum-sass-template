@@ -7,8 +7,8 @@ use tokio::task;
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
-    id: i32,
-    pub username: String,
+    id: uuid::Uuid,
+    pub email: String,
     password_hash: String,
 }
 
@@ -18,14 +18,14 @@ impl std::fmt::Debug for User {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("User")
             .field("id", &self.id)
-            .field("username", &self.username)
+            .field("email", &self.email)
             .field("password_hash", &"[redacted]")
             .finish()
     }
 }
 
 impl AuthUser for User {
-    type Id = i32;
+    type Id = uuid::Uuid;
 
     fn id(&self) -> Self::Id {
         self.id
@@ -33,9 +33,9 @@ impl AuthUser for User {
 
     fn session_auth_hash(&self) -> &[u8] {
         self.password_hash.as_bytes() // We use the password hash as the auth
-                                 // hash--what this means
-                                 // is when the user changes their password the
-                                 // auth session becomes invalid.
+                                      // hash--what this means
+                                      // is when the user changes their password the
+                                      // auth session becomes invalid.
     }
 }
 
@@ -43,7 +43,7 @@ impl AuthUser for User {
 // to authenticate requests with the backend.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Credentials {
-    pub username: String,
+    pub email: String,
     pub password: String,
     pub next: Option<String>,
 }
@@ -78,12 +78,10 @@ impl AuthnBackend for Backend {
         &self,
         creds: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        println!("TRYING TO PRINT USER");
-        let user: Option<Self::User> = sqlx::query_as("SELECT * FROM users WHERE username = $1")
-            .bind(&creds.username)
+        let user: Option<Self::User> = sqlx::query_as("SELECT * FROM users WHERE email = $1")
+            .bind(&creds.email)
             .fetch_optional(&self.db)
             .await?;
-        println!("USER: {:?}", user);
 
         // Verifying the password is blocking and potentially slow, so we'll do so via
         // `spawn_blocking`.
