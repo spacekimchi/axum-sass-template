@@ -5,7 +5,6 @@ use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use secrecy::Secret;
 use axum::{Extension,Router};
-use tower::ServiceBuilder;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use std::sync::Arc;
@@ -61,7 +60,6 @@ impl Application {
         let port = listener.local_addr().unwrap().port();
         let tera = Tera::new("templates/**/*html")?;
         let tera = Arc::new(tera);
-        println!("RETURNING FORM BUILDING");
 
         Ok(Self { port, db_pool: connection_pool, tera, listener, base_url: configuration.application.base_url, redis_uri: configuration.redis_uri, hmac_secret: configuration.application.hmac_secret })
     }
@@ -88,7 +86,6 @@ pub fn get_connection_pool(
 pub struct ApplicationBaseUrl(pub String);
 
 pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _redis_uri: Secret<String>, hmac_secret: Secret<String>, tera: Arc<Tera>) -> Result<(), anyhow::Error> {
-    println!("AT THE START OF RUN RETURNING");
     // Session layer.
     //
     // This uses `tower-sessions` to establish a layer that will provide the session
@@ -100,9 +97,10 @@ pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _red
         .clone()
         .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
     );
+
     // Generate a cryptographic key to sign the session cookie.
     // let key = Key::generate();
-
+    // TODO: Need to secure cookie
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
@@ -114,19 +112,16 @@ pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _red
     let backend = Backend::new(db_pool.clone());
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
 
-    println!("AT THE MIDDLE OF RUN RETURNING");
     let app = api_router()
         .layer(TraceLayer::new_for_http())
         .layer(Extension(AppState {db: db_pool, hmac_secret, tera}))
         .layer(MessagesManagerLayer)
         .layer(auth_layer);
-    println!("AT THE AFTER ROUTE OF RUN RETURNING");
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
         .await?;
 
     deletion_task.await??;
-    println!("AT THE END OF RUN RETURNING");
     Ok(())
 }
 

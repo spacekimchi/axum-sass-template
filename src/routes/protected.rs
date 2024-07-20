@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use axum::Extension;
 use axum::response::Html;
 use crate::startup::AppState;
-use axum_messages::{Message, Messages};
+use axum_messages::Messages;
 use crate::template_helpers::{render_content, RenderTemplateParams};
 
 use crate::user::AuthSession;

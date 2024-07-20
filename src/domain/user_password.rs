@@ -138,17 +138,3 @@ mod tests {
     }
 }
 
-fn main() {
-    // Test with a valid password
-    match UserPassword::parse(Secret::new("P@ssw0rd".to_string())) {
-        Ok(password) => println!("Valid password: {:?}", password),
-        Err(e) => println!("Error: {}", e),
-    }
-
-    // Test with an invalid password
-    match UserPassword::parse(Secret::new("short".to_string())) {
-        Ok(password) => println!("Valid password: {:?}", password),
-        Err(e) => println!("Error: {}", e),
-    }
-}
-
