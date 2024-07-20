@@ -8,3 +8,4 @@ pub mod template_helpers;
 pub mod utils;
 pub mod user;
 pub mod domain;
+pub mod emailer;

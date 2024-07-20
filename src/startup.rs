@@ -114,7 +114,15 @@ pub async fn run(db_pool: PgPool, listener: TcpListener, _base_url: String, _red
 
     let app = api_router()
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(AppState {db: db_pool, hmac_secret, tera}))
+        .layer(
+            Extension(
+                AppState {
+                    db: db_pool,
+                    hmac_secret,
+                    tera,
+                }
+            )
+        )
         .layer(MessagesManagerLayer)
         .layer(auth_layer);
     axum::serve(listener, app)
@@ -180,3 +188,4 @@ async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
         _ = terminate => { deletion_task_abort_handle.abort() },
     }
 }
+

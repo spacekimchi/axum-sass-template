@@ -68,6 +68,15 @@ Then run `cargo watch -x run`
 
 Run with `cargo watch --no-vcs-ignores -x run` to ignore the .gitignore and use the `.ignore_file` instead
 
+## Emailing
+
+The project is set up to email using SMTP servers.
+
+I recommend using [MailHog](https://github.com/mailhog/MailHog) for testing email sending during development.
+You are able to view sent mail at [http://localhost:8025](http://localhost:8025)
+
+The default port for mailhog is 1025, and the default email view for the browser is 8025.
+
 ## Frontend
 
 Instead of using a frontend framework, this project will use SSR to serve HTML, SCSS, and JavaScript.

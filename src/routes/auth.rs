@@ -18,6 +18,7 @@ use password_auth::generate_hash;
 
 use crate::user::{AuthSession, Credentials};
 use crate::domain::{NewUser, UserEmail, UserPassword};
+use crate::emailer;
 
 // This allows us to extract the "next" field from the query string. We use this
 // to redirect after log in.
@@ -71,11 +72,11 @@ mod post {
         };
         let user_id = uuid::Uuid::new_v4();
         let password_hash = match telemetry::spawn_blocking_with_tracing(move || generate_hash(new_user.password)).await {
-         Ok(hash) => hash,
-         Err(err) => {
-             messages.error(err.to_string());
-             return Redirect::to("/register").into_response();
-         },
+            Ok(hash) => hash,
+            Err(err) => {
+                messages.error(err.to_string());
+                return Redirect::to("/register").into_response();
+            },
         };
 
         match sqlx::query(
@@ -91,6 +92,25 @@ mod post {
                 Err(err) => return err.into_response()
             };
         messages.success(format!("Successfully registered account!"));
+
+        let mut context = std::collections::HashMap::new();
+        context.insert("email", "jinius@g.com");
+        context.insert("confirmation_link", "http://example.com/confirm");
+        match emailer::send_email(
+            &new_user.email.email,
+            "Welcome to Our Application",
+            "emails/user_registration.html",
+            &context,
+            &state.tera,
+        ).await.map_err(e500) {
+            Ok(_) => {
+                println!("Email was successfully sent");
+            },
+            Err(err) => {
+                return err.into_response();
+            }
+        }
+
         Redirect::to("/").into_response()
     }
 
