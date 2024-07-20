@@ -7,7 +7,7 @@ use axum::{
 };
 use axum::Extension;
 use axum::response::Html;
-use axum_messages::{Message, Messages};
+use axum_messages::Messages;
 use serde::Deserialize;
 use crate::startup::AppState;
 use crate::template_helpers::{render_content, RenderTemplateParams};
@@ -134,12 +134,11 @@ mod get {
 
     pub async fn register(
         Extension(state): Extension<AppState>,
-        messages: Messages,
+        _messages: Messages,
         Query(NextUrl { next }): Query<NextUrl>,
     ) -> impl IntoResponse {
         let mut context = tera::Context::new();
         context.insert("next", &next);
-        println!("MESSAGES: {:?}", messages);
         match render_content(
             &RenderTemplateParams::new("register.html", &state.tera)
             .with_context(&context)
@@ -151,12 +150,13 @@ mod get {
 
     pub async fn login(
         Extension(state): Extension<AppState>,
-        messages: Messages,
+        _messages: Messages,
         Query(NextUrl { next }): Query<NextUrl>,
     ) -> impl IntoResponse {
         let mut context = tera::Context::new();
         let boo = "FROM THE LOGIN ROUTE";
         context.insert("boo", &boo);
+        context.insert("next", &next);
         match render_content(
             &RenderTemplateParams::new("login.html", &state.tera)
             .with_context(&context)

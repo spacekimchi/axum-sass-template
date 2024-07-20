@@ -16,8 +16,21 @@ name = "axum_sass_template"
 # Axum, Tower, and Tokio
 axum = { version = "0.7.5", features = ["multipart", "macros"] }
 axum-extra = { version = "0.9.3", features = ["cookie", "cookie-key-expansion", "cookie-private", "cookie-signed"] }
+axum-messages = "0.6.1"
 tower = "0.4.13"
 tokio = { version = "1.37.0", features = ["full"] }
+
+# Authentication
+axum-login = "0.15.3"
+tower-sessions-sqlx-store = { version = "0.12.0", features = ["postgres"] }
+async-trait = "0.1.81"
+
+# Password (uses Argon2)
+password-auth = "1.0.0"
+validator = { version = "0.18.1", features = ["derive"] }
+
+# Time
+time = "0.3.36"
 
 # Configuration
 config = "0.14.0"
@@ -25,11 +38,13 @@ dotenv = "0.15.0"
 
 # Errors
 anyhow = "1.0.86"
+thiserror = "1.0.63"
 
 # Serialize and Deserialize
 serde = { version = "1.0.204", features = ["derive"] }
 serde-aux = "4.5.0"
 serde_json = "1.0.120"
+serde_urlencoded = "0.7.1"
 
 # hashing
 argon2 = { version = "0.5.3", features = ["std"] }
@@ -53,14 +68,6 @@ tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 # Frontend
 tera = "1.20.0"
 grass = "0.13.3"
-async-trait = "0.1.81"
-axum-login = "0.15.3"
-password-auth = "1.0.0"
-thiserror = "1.0.63"
-axum-messages = "0.6.1"
-tower-sessions-sqlx-store = { version = "0.12.0", features = ["postgres"] }
-time = "0.3.36"
-validator = { version = "0.18.1", features = ["derive"] }
 
 [dev-dependencies]
 # Part of tracing for tests
@@ -70,3 +77,4 @@ fake = "2.9.2"
 claims = "0.7.1"
 quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
+rand = "0.8.5"
