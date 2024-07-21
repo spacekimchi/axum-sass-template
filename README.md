@@ -95,6 +95,10 @@ This way, we only need to build the project with cargo. No javascript building i
 
 Add javascript files to /static/js/ directory and include them in the html wherever they are needed
 
+## Roles
+
+The application is set up to create an initial user with the admin role. The name can be changed by looking at the `migrations/20240721170003_seed_users.sql` file.
+
 ## Tests
 
 Run tests with the command `cargo test`
