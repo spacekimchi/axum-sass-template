@@ -9,3 +9,4 @@ pub mod utils;
 pub mod user;
 pub mod domain;
 pub mod emailer;
+pub mod constants;

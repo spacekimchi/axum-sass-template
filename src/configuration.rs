@@ -40,6 +40,7 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub test: TestSettings,
     pub application: ApplicationSettings,
+    pub email: EmailSettings,
     pub redis_uri: Secret<String>,
 }
 
@@ -61,6 +62,18 @@ pub struct DatabaseSettings {
     pub host: String,
     pub database_name: String,
     pub require_ssl: bool,
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct EmailSettings {
+    pub smtp_host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub smtp_port: u16,
+    pub smtp_username: String,
+    pub smtp_password: Secret<String>,
+    pub admin_email: String,
+    pub support_email: String,
+    pub welcome_email: String,
 }
 
 #[derive(serde::Deserialize, Clone, Debug)]

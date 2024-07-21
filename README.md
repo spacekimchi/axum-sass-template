@@ -77,15 +77,17 @@ You are able to view sent mail at [http://localhost:8025](http://localhost:8025)
 
 The default port for mailhog is 1025, and the default email view for the browser is 8025.
 
+Email templates are placed under the `templates/emails` directory.
+
 ## Frontend
 
 Instead of using a frontend framework, this project will use SSR to serve HTML, SCSS, and JavaScript.
 
-The project uses [tera](https://github.com/Keats/tera) for templating.
+The project uses [tera](https://github.com/Keats/tera) for templating. Tera uses the `templates/` directory as a base directory
 
 The scss will be compiled when the project starts using the [grass crate](https://github.com/connorskees/grass)
 
-The project is set up to compile any scss files in the `public/scss/` directory.
+The project is set up to compile any scss files in the `scss/` directory.
 
 This way, we only need to build the project with cargo. No javascript building involved!
 

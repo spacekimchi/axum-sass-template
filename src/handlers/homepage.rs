@@ -2,6 +2,7 @@ use axum::Extension;
 use axum::response::{Html, IntoResponse};
 use crate::startup::AppState;
 use crate::template_helpers::{render_content, RenderTemplateParams};
+use crate::constants::html_templates;
 
 pub async fn homepage(Extension(state): Extension<AppState>) -> impl IntoResponse {
     let mut context = tera::Context::new();
@@ -9,7 +10,7 @@ pub async fn homepage(Extension(state): Extension<AppState>) -> impl IntoRespons
     context.insert("boo", &boo);
 
     match render_content(
-        &RenderTemplateParams::new("homepage.html", &state.tera)
+        &RenderTemplateParams::new(html_templates::HOMEPAGE, &state.tera)
         .with_context(&context)
     ) {
         Ok(homepage_template) => Html(homepage_template).into_response(),
