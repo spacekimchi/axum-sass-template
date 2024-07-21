@@ -1,5 +1,9 @@
 use std::sync::Arc;
 use crate::utils::{e500, ErrorResponse};
+use crate::constants::{
+    strings,
+    html_templates,
+};
 
 pub struct RenderTemplateParams<'a> {
     pub template_path: &'static str,
@@ -38,7 +42,7 @@ pub fn err_500_template<E: std::fmt::Display>(tr: &Arc<tera::Tera>, error: E) ->
     let error_description = format!("{}", error);
     let mut context = tera::Context::new();
     context.insert("error_description", &error_description);
-    tr.render("500.html", &context).unwrap_or_else(|_| String::from("Internal Server Error"))
+    tr.render(html_templates::E500, &context).unwrap_or_else(|_| String::from(strings::INTERNAL_SERVER_ERROR))
 }
 
 pub fn currency_format(value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>) -> tera::Result<tera::Value> {

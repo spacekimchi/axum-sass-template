@@ -9,7 +9,6 @@ pub fn e500<T>(e: T) -> ErrorResponse
 where
     T: Debug + std::fmt::Display + 'static,
 {
-    println!("ERROR FROM E500: {:?}", e);
     ErrorResponse::InternalServerError(e.to_string())
 }
 

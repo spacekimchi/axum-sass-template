@@ -6,9 +6,13 @@ use axum_messages::Messages;
 use crate::template_helpers::{render_content, RenderTemplateParams};
 
 use crate::user::AuthSession;
+use crate::constants::{
+    route_paths,
+    html_templates,
+};
 
 pub fn routes() -> Router<()> {
-    Router::new().route("/", get(self::get::protected))
+    Router::new().route(route_paths::ROOT, get(self::get::protected))
 }
 
 mod get {
@@ -21,7 +25,7 @@ mod get {
                 let boo = "FROM PROTECTED ROUTE";
                 context.insert("boo", &boo);
                 match render_content(
-                    &RenderTemplateParams::new("homepage.html", &state.tera)
+                    &RenderTemplateParams::new(html_templates::HOMEPAGE, &state.tera)
                     .with_context(&context)
                 ) {
                     Ok(homepage_template) => Html(homepage_template).into_response(),

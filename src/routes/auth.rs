@@ -19,6 +19,12 @@ use password_auth::generate_hash;
 use crate::user::{AuthSession, Credentials};
 use crate::domain::{NewUser, UserEmail, UserPassword};
 use crate::emailer;
+use crate::constants::{
+    html_templates,
+    route_paths,
+    email_templates,
+    strings,
+};
 
 // This allows us to extract the "next" field from the query string. We use this
 // to redirect after log in.
@@ -48,11 +54,11 @@ impl TryFrom<RegistrationForm> for NewUser {
 
 pub fn routes() -> Router<()> {
     Router::new()
-        .route("/login", post(self::post::login))
-        .route("/register", get(self::get::register))
-        .route("/register", post(self::post::register))
-        .route("/login", get(self::get::login))
-        .route("/logout", get(self::get::logout))
+        .route(route_paths::LOGIN, post(self::post::login))
+        .route(route_paths::REGISTER, get(self::get::register))
+        .route(route_paths::REGISTER, post(self::post::register))
+        .route(route_paths::LOGIN, get(self::get::login))
+        .route(route_paths::LOGOUT, get(self::get::logout))
 }
 
 mod post {
@@ -67,7 +73,7 @@ mod post {
             Ok(new_user) => new_user,
             Err(err) => {
                 messages.error(err.to_string());
-                return Redirect::to("/register").into_response();
+                return Redirect::to(route_paths::REGISTER).into_response();
             },
         };
         let user_id = uuid::Uuid::new_v4();
@@ -75,7 +81,7 @@ mod post {
             Ok(hash) => hash,
             Err(err) => {
                 messages.error(err.to_string());
-                return Redirect::to("/register").into_response();
+                return Redirect::to(route_paths::REGISTER).into_response();
             },
         };
 
@@ -91,17 +97,18 @@ mod post {
                 Ok(user) => user,
                 Err(err) => return err.into_response()
             };
-        messages.success(format!("Successfully registered account!"));
+        messages.success(strings::REGISTER_ACCOUNT_SUCCESS);
 
         let mut context = std::collections::HashMap::new();
         context.insert("email", "jinius@g.com");
         context.insert("confirmation_link", "http://example.com/confirm");
         match emailer::send_email(
             &new_user.email.email,
-            "Welcome to Our Application",
-            "emails/user_registration.html",
+            strings::WELCOME_EMAIL_SUBJECT,
+            email_templates::EMAIL_VERIFICATION,
             &context,
             &state.tera,
+            &state.email_settings,
         ).await.map_err(e500) {
             Ok(_) => {
                 println!("Email was successfully sent");
@@ -111,7 +118,7 @@ mod post {
             }
         }
 
-        Redirect::to("/").into_response()
+        Redirect::to(route_paths::ROOT).into_response()
     }
 
     pub async fn login(
@@ -122,9 +129,9 @@ mod post {
         let user = match auth_session.authenticate(creds.clone()).await {
             Ok(Some(user)) => user,
             Ok(None) => {
-                messages.error("Invalid credentials");
+                messages.error(strings::INVALID_CREDENTIALS);
 
-                let mut login_url = "/login".to_string();
+                let mut login_url = route_paths::LOGIN.to_string();
                 if let Some(next) = creds.next {
                     login_url = format!("{}?next={}", login_url, next);
                 };
@@ -143,7 +150,7 @@ mod post {
         if let Some(ref next) = creds.next {
             Redirect::to(next)
         } else {
-            Redirect::to("/")
+            Redirect::to(route_paths::ROOT)
         }
         .into_response()
     }
@@ -160,7 +167,7 @@ mod get {
         let mut context = tera::Context::new();
         context.insert("next", &next);
         match render_content(
-            &RenderTemplateParams::new("register.html", &state.tera)
+            &RenderTemplateParams::new(html_templates::REGISTER, &state.tera)
             .with_context(&context)
         ) {
             Ok(register_template) => Html(register_template).into_response(),
@@ -178,7 +185,7 @@ mod get {
         context.insert("boo", &boo);
         context.insert("next", &next);
         match render_content(
-            &RenderTemplateParams::new("login.html", &state.tera)
+            &RenderTemplateParams::new(html_templates::LOGIN, &state.tera)
             .with_context(&context)
         ) {
             Ok(homepage_template) => Html(homepage_template).into_response(),
@@ -188,7 +195,7 @@ mod get {
 
     pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {
         match auth_session.logout().await {
-            Ok(_) => Redirect::to("/login").into_response(),
+            Ok(_) => Redirect::to(route_paths::ROOT).into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
