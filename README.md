@@ -99,6 +99,12 @@ Add javascript files to /static/js/ directory and include them in the html where
 
 The application is set up to create an initial user with the admin role. The name can be changed by looking at the `migrations/20240721170003_seed_users.sql` file.
 
+## Executable scripts
+
+Sometimes there will be a need to run a script against the database, to seed or migrate something. Or we might want to inspect the database.
+
+We can do that by writing executable scripts inside of the `/bin/` directory. There is an example `/bin/seeds.rs`. Don't forget to add it to Cargo.toml
+
 ## Tests
 
 Run tests with the command `cargo test`

@@ -10,6 +10,10 @@ path = "src/lib.rs"
 path = "src/main.rs"
 name = "axum_sass_template"
 
+[[bin]]
+path = "src/seeds.rs"
+name = "seeds"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
