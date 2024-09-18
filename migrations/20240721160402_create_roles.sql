@@ -1,4 +1,4 @@
-CREATE TABLE roles (
+CREATE TABLE if not exists roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

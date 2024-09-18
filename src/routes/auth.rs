@@ -36,6 +36,7 @@ pub struct NextUrl {
 #[derive(Debug, Deserialize)]
 pub struct RegistrationForm {
     pub email: String,
+    pub username: String,
     pub password: Secret<String>,
 }
 
@@ -48,7 +49,8 @@ impl TryFrom<RegistrationForm> for NewUser {
     fn try_from(value: RegistrationForm) -> Result<Self, Self::Error> {
         let email = UserEmail::parse(value.email)?;
         let password = UserPassword::parse(value.password)?;
-        Ok(Self { email, password })
+        let username = value.username;
+        Ok(Self { email, password, username })
     }
 }
 
@@ -69,6 +71,7 @@ mod post {
         messages: Messages,
         Form(creds): Form<RegistrationForm>,
     ) -> impl IntoResponse {
+        println!("\n\n\nCREDS: {:?}\n\n\n", creds);
         let new_user = match NewUser::try_from(creds) {
             Ok(new_user) => new_user,
             Err(err) => {
@@ -85,11 +88,13 @@ mod post {
             },
         };
 
+        println!("USERNAME: {:?}", new_user.username);
         match sqlx::query(
-            "INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3) RETURNING id, email, password_hash, created_at, updated_at"
+            "INSERT INTO users (id, email, username, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, email, username, password_hash, created_at, updated_at"
         )
             .bind(&user_id)
             .bind(&new_user.email.email)
+            .bind(&new_user.username)
             .bind(&password_hash)
             .fetch_one(&state.db)
             .await
@@ -111,10 +116,11 @@ mod post {
             &state.email_settings,
         ).await.map_err(e500) {
             Ok(_) => {
-                println!("Email was successfully sent");
+                println!("\n\n\nEmail was successfully sent\n\n\n");
             },
             Err(err) => {
-                return err.into_response();
+                // return err.into_response();
+                println!("\n\n\nEMAIL FAILED TO SEND... {:?}\n\n\n", err.into_response());
             }
         }
 
@@ -126,6 +132,7 @@ mod post {
         messages: Messages,
         Form(creds): Form<Credentials>,
     ) -> impl IntoResponse {
+        println!("LOOKING FOR USER WITH CREDS");
         let user = match auth_session.authenticate(creds.clone()).await {
             Ok(Some(user)) => user,
             Ok(None) => {
@@ -161,7 +168,7 @@ mod get {
 
     pub async fn register(
         Extension(state): Extension<AppState>,
-        _messages: Messages,
+        messages: Messages,
         Query(NextUrl { next }): Query<NextUrl>,
     ) -> impl IntoResponse {
         let mut context = tera::Context::new();

@@ -1,10 +1,17 @@
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
-use axum::Extension;
-use axum::response::Html;
-use crate::startup::AppState;
+use axum::{
+    Extension,
+    http::StatusCode,
+    response::{
+        IntoResponse,
+        Html,
+    },
+    routing::get,
+    Router,
+};
 use axum_messages::Messages;
-use crate::template_helpers::{render_content, RenderTemplateParams};
 
+use crate::startup::AppState;
+use crate::template_helpers::{render_content, RenderTemplateParams};
 use crate::user::AuthSession;
 use crate::constants::{
     route_paths,
@@ -34,6 +41,5 @@ mod get {
             },
             None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
-        
     }
 }

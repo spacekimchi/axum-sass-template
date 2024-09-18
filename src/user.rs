@@ -7,8 +7,9 @@ use tokio::task;
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
-    id: uuid::Uuid,
+    pub id: uuid::Uuid,
     pub email: String,
+    pub username: String,
     password_hash: String,
 }
 
@@ -19,6 +20,7 @@ impl std::fmt::Debug for User {
         f.debug_struct("User")
             .field("id", &self.id)
             .field("email", &self.email)
+            .field("username", &self.username)
             .field("password_hash", &"[redacted]")
             .finish()
     }

@@ -15,7 +15,8 @@ use crate::constants::{
 };
 
 pub fn routes() -> Router {
-    Router::new().route(route_paths::ROOT, get(self::get::index))
+    Router::new()
+        .route(route_paths::ROOT, get(self::get::index))
 }
 
 mod get {
@@ -25,11 +26,11 @@ mod get {
         Extension(state): Extension<AppState>
     ) -> impl IntoResponse {
         let mut context = tera::Context::new();
-        let boo = "asdf";
+        let boo = "ADMIN PAGE";
         context.insert("boo", &boo);
 
         match render_content(
-            &RenderTemplateParams::new(html_templates::HOMEPAGE, &state.tera)
+            &RenderTemplateParams::new(html_templates::ADMIN_INDEX, &state.tera)
             .with_context(&context)
         ) {
             Ok(homepage_template) => Html(homepage_template).into_response(),

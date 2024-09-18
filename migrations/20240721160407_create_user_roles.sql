@@ -1,4 +1,4 @@
-CREATE TABLE user_roles (
+CREATE TABLE if not exists user_roles (
     id SERIAL PRIMARY KEY,
     user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     role_id INTEGER NOT NULL REFERENCES roles (id) ON DELETE CASCADE,

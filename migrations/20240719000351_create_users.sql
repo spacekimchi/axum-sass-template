@@ -1,13 +1,11 @@
--- Add migration script here
-
-create table if not exists users
+CREATE TABLE if not exists users
 (
-    id uuid primary key not null,
-    email text not null unique,
-    password_hash text not null,
+    id uuid PRIMARY KEY NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
 );
 
 -- Auto Updates for updated_at column
